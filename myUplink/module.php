@@ -170,10 +170,15 @@ class myUplink extends IPSModule
 
     public function RequestToken(string $authCode): void
     {
+        $this->SendDebug('RequestToken', 'Authorization Code empfangen (Länge: ' . strlen($authCode) . ')', 0);
+
         if (strlen($authCode) < 60) {
+            $this->SendDebug('RequestToken', 'Fehler: Code zu kurz', 0);
             echo 'Fehler: Authorization Code ist zu kurz oder ungültig.';
             return;
         }
+
+        $this->SendDebug('RequestToken', 'Sende Token-Anfrage an: ' . self::TOKEN_URL, 0);
 
         $response = $this->doPost(self::TOKEN_URL, [
             'grant_type'    => 'authorization_code',
@@ -184,10 +189,12 @@ class myUplink extends IPSModule
         ]);
 
         if ($response === null || ($response['token_type'] ?? '') !== 'Bearer') {
+            $this->SendDebug('RequestToken', 'Fehler: Ungültige API-Antwort', 0);
             echo 'Fehler: Token-Anfrage fehlgeschlagen. Bitte Authorization Code prüfen.';
             return;
         }
 
+        $this->SendDebug('RequestToken', 'Token erfolgreich empfangen (token_type: ' . $response['token_type'] . ', expires_in: ' . ($response['expires_in'] ?? '?') . 's)', 0);
         $this->WriteAttributeString('TokenData', json_encode($response));
         $this->ApplyChanges();
 
@@ -196,38 +203,58 @@ class myUplink extends IPSModule
 
     public function Update(): void
     {
+        $this->SendDebug('Update', 'Update gestartet um ' . date('H:i:s'), 0);
+
         $tokenData = $this->loadToken();
         if ($tokenData === null) {
+            $this->SendDebug('Update', 'Fehler: Kein Token vorhanden', 0);
             $this->LogMessage('Kein Token vorhanden – bitte zuerst Token anfordern.', KL_ERROR);
             return;
         }
 
+        $this->SendDebug('Update', 'Token geladen, sende Anfrage an systems/me', 0);
         $accessToken = $tokenData['access_token'] ?? '';
         $result      = $this->doGet('https://api.myuplink.com/v2/systems/me', $accessToken);
 
+        $this->SendDebug('GET systems/me', 'HTTP ' . $result['status'], 0);
+
         if ($result['status'] === 401) {
+            $this->SendDebug('Update', 'Token abgelaufen (401), starte Refresh...', 0);
             $this->LogMessage('Token abgelaufen, starte Refresh...', KL_WARNING);
             $tokenData = $this->refreshToken($tokenData);
             if ($tokenData === null) {
+                $this->SendDebug('Update', 'Token-Refresh fehlgeschlagen', 0);
                 $this->LogMessage('Token-Refresh fehlgeschlagen.', KL_ERROR);
                 return;
             }
+            $this->SendDebug('Update', 'Token-Refresh erfolgreich, wiederhole Anfrage', 0);
             $accessToken = $tokenData['access_token'];
             $result      = $this->doGet('https://api.myuplink.com/v2/systems/me', $accessToken);
+            $this->SendDebug('GET systems/me (retry)', 'HTTP ' . $result['status'], 0);
         }
 
         if ($result['status'] !== 200) {
+            $this->SendDebug('Update', 'Fehler: HTTP ' . $result['status'] . ' bei systems/me', 0);
             $this->LogMessage("API-Fehler HTTP {$result['status']} bei systems/me.", KL_ERROR);
             return;
         }
 
-        foreach ($result['body']['systems'] ?? [] as $system) {
-            foreach ($system['devices'] ?? [] as $device) {
-                $deviceID = $device['id'];
-                $pResult  = $this->doGet(
-                    "https://api.myuplink.com/v2/devices/$deviceID/points",
-                    $accessToken
-                );
+        $systems = $result['body']['systems'] ?? [];
+        $this->SendDebug('Update', count($systems) . ' System(e) gefunden', 0);
+
+        foreach ($systems as $system) {
+            $systemName = $system['name'] ?? $system['systemId'] ?? '?';
+            $devices    = $system['devices'] ?? [];
+            $this->SendDebug('System', '"' . $systemName . '" – ' . count($devices) . ' Gerät(e)', 0);
+
+            foreach ($devices as $device) {
+                $deviceID   = $device['id'];
+                $deviceName = $device['product']['name'] ?? $deviceID;
+                $pointsURL  = 'https://api.myuplink.com/v2/devices/' . $deviceID . '/points';
+
+                $this->SendDebug('GET points', $deviceName . ' → ' . $pointsURL, 0);
+                $pResult = $this->doGet($pointsURL, $accessToken);
+                $this->SendDebug('GET points', 'HTTP ' . $pResult['status'] . ' – ' . count($pResult['body']) . ' Parameter', 0);
 
                 if ($pResult['status'] === 200) {
                     foreach ($pResult['body'] as $point) {
@@ -237,6 +264,7 @@ class myUplink extends IPSModule
             }
         }
 
+        $this->SendDebug('Update', 'Update abgeschlossen um ' . date('H:i:s'), 0);
         $this->LogMessage('Update erfolgreich um ' . date('H:i:s') . '.', KL_MESSAGE);
     }
 
@@ -254,6 +282,8 @@ class myUplink extends IPSModule
 
     private function refreshToken(array $old): ?array
     {
+        $this->SendDebug('refreshToken', 'Sende Refresh-Anfrage an: ' . self::TOKEN_URL, 0);
+
         $response = $this->doPost(self::TOKEN_URL, [
             'grant_type'    => 'refresh_token',
             'client_id'     => $this->ReadPropertyString('ClientID'),
@@ -261,8 +291,12 @@ class myUplink extends IPSModule
             'refresh_token' => $old['refresh_token'] ?? '',
         ]);
 
-        if ($response === null) return null;
+        if ($response === null) {
+            $this->SendDebug('refreshToken', 'Fehler: Keine gültige Antwort erhalten', 0);
+            return null;
+        }
 
+        $this->SendDebug('refreshToken', 'Neuer Token empfangen, expires_in: ' . ($response['expires_in'] ?? '?') . 's', 0);
         $this->WriteAttributeString('TokenData', json_encode($response));
         return $response;
     }
@@ -276,6 +310,11 @@ class myUplink extends IPSModule
         ]);
         $body     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($httpCode !== 200) {
+            $this->SendDebug('doGet', 'Fehler HTTP ' . $httpCode . ' für URL: ' . $url . ' – Antwort: ' . $body, 0);
+        }
+
         return ['status' => $httpCode, 'body' => json_decode($body, true) ?? []];
     }
 
@@ -290,6 +329,11 @@ class myUplink extends IPSModule
         ]);
         $body     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($httpCode !== 200) {
+            $this->SendDebug('doPost', 'Fehler HTTP ' . $httpCode . ' für URL: ' . $url . ' – Antwort: ' . $body, 0);
+        }
+
         return $httpCode === 200 ? (json_decode($body, true) ?? null) : null;
     }
 
@@ -301,9 +345,10 @@ class myUplink extends IPSModule
 
         if ($paramId === '') return;
 
-        // Ident: Buchstaben, Zahlen und _ erlaubt, muss mit Buchstabe beginnen
         $ident     = 'p_' . preg_replace('/\W/', '_', $paramId);
         $labelName = $paramId . ' ' . $paramName;
+
+        $this->SendDebug('syncVariable', $labelName . ' = ' . $value . ' ' . ($point['parameterUnit'] ?? ''), 0);
 
         if (is_numeric($value)) {
             $this->RegisterVariableFloat($ident, $labelName, '', 0);
