@@ -148,7 +148,7 @@ class myUplink extends IPSModule
         ]);
     }
 
-    public function RequestAction(string $ident, mixed $value): void
+    public function RequestAction($ident, $value): void
     {
         match ($ident) {
             'Update' => $this->Update(),
