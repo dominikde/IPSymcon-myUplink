@@ -1,12 +1,11 @@
 {
     "id": "{B5D7A3F2-C891-4E6D-A0B3-8F2E5D4C1907}",
+    "name": "myUplink",
+    "type": 3,
+    "vendor": "NIBE",
+    "aliases": [],
     "parentRequirements": [],
     "childRequirements": [],
     "implemented": [],
-    "prefix": "MYU",
-    "aliases": [],
-    "name": "myUplink",
-    "description": "Liest Gerätedaten von der myUplink API und legt sie als IPS-Variablen an",
-    "vendor": "NIBE",
-    "type": 3
+    "prefix": "MYU"
 }
