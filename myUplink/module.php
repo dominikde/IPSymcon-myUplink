@@ -302,13 +302,14 @@ class myUplink extends IPSModule
         if ($paramId === '') return;
 
         // Ident: Buchstaben, Zahlen und _ erlaubt, muss mit Buchstabe beginnen
-        $ident = 'p_' . preg_replace('/\W/', '_', $paramId);
+        $ident     = 'p_' . preg_replace('/\W/', '_', $paramId);
+        $labelName = $paramId . ' ' . $paramName;
 
         if (is_numeric($value)) {
-            $this->RegisterVariableFloat($ident, $paramName, '', 0);
+            $this->RegisterVariableFloat($ident, $labelName, '', 0);
             $this->SetValue($ident, (float) $value);
         } else {
-            $this->RegisterVariableString($ident, $paramName, '', 0);
+            $this->RegisterVariableString($ident, $labelName, '', 0);
             $this->SetValue($ident, (string) ($value ?? ''));
         }
     }
