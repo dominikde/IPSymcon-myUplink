@@ -6,5 +6,7 @@
     "prefix": "MYU",
     "aliases": [],
     "name": "myUplink",
-    "description": "Liest Gerätedaten von der myUplink API und legt sie als IPS-Variablen an"
+    "description": "Liest Gerätedaten von der myUplink API und legt sie als IPS-Variablen an",
+    "vendor": "NIBE",
+    "type": 3
 }
