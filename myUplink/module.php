@@ -103,11 +103,12 @@ class myUplink extends IPSModule
                 ],
                 [
                     'type'    => 'Label',
-                    'caption' => 'Schritt 1: Öffne diesen Link im Browser und melde dich mit deinem myUplink-Konto an:',
+                    'caption' => 'Schritt 1: Klicke den Button um dich bei myUplink anzumelden:',
                 ],
                 [
-                    'type'    => 'Label',
-                    'caption' => $authURL,
+                    'type'    => 'Button',
+                    'caption' => 'myUplink Login öffnen',
+                    'onClick' => 'echo \'<a href="' . $authURL . '" target="_blank" style="font-size:14px">' . $authURL . '</a>\';',
                 ],
                 [
                     'type'    => 'Label',
