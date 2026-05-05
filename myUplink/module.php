@@ -72,9 +72,12 @@ class myUplink extends IPSModule
                     'bold'    => true,
                 ],
                 [
-                    'type'    => 'Button',
-                    'caption' => 'myUplink Developer Portal öffnen',
-                    'onClick' => 'echo \'<script>window.open("https://dev.myuplink.com/apps?activeTab=0","_blank");</script>\';',
+                    'type'    => 'Label',
+                    'caption' => 'myUplink Developer Portal (Client ID & Secret):',
+                ],
+                [
+                    'type'    => 'Label',
+                    'caption' => 'https://dev.myuplink.com/apps?activeTab=0',
                 ],
                 [
                     'type'    => 'ValidationTextBox',
