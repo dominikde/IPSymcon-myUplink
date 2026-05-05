@@ -1,10 +1,10 @@
 {
     "id": "{C3E4F1A2-D7B8-4C9E-B0F5-6A2D8E3C7014}",
-    "author": "Dominik",
-    "description": "myUplink API Integration für IP-Symcon",
+    "author": "dominikde",
     "name": "myUplink",
-    "url": "",
-    "version": "1.0.0",
+    "url": "https://github.com/dominikde/IPSymcon-myUplink",
+    "description": "myUplink API Integration für IP-Symcon",
+    "version": "1.0",
     "build": 1,
     "date": 0
 }
