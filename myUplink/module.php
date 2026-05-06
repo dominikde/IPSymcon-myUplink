@@ -20,7 +20,7 @@ class myUplink extends IPSModule
 
         $this->RegisterPropertyString('ClientID', '');
         $this->RegisterPropertyString('ClientSecret', '');
-        $this->RegisterPropertyInteger('Interval', 60);
+        $this->RegisterPropertyInteger('Interval', 120);
 
         // Persistenter Token-Speicher (überlebt IPS-Neustart)
         $this->RegisterAttributeString('TokenData', '');
@@ -94,7 +94,7 @@ class myUplink extends IPSModule
                     'name'    => 'Interval',
                     'caption' => 'Aktualisierungsintervall (Sekunden)',
                     'minimum' => 30,
-                    'maximum' => 3600,
+                    'maximum' => 1800,
                 ],
             ],
             'actions' => [
