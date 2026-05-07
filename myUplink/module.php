@@ -311,6 +311,12 @@ class myUplink extends IPSModule
         $body     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+        if ($body === false) {
+            $this->SendDebug('doGet', 'cURL-Fehler: ' . curl_error($ch) . ' für URL: ' . $url, 0);
+            curl_close($ch);
+            return ['status' => 0, 'body' => []];
+        }
+
         if ($httpCode !== 200) {
             $this->SendDebug('doGet', 'Fehler HTTP ' . $httpCode . ' für URL: ' . $url . ' – Antwort: ' . $body, 0);
         }
@@ -329,6 +335,12 @@ class myUplink extends IPSModule
         ]);
         $body     = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($body === false) {
+            $this->SendDebug('doPost', 'cURL-Fehler: ' . curl_error($ch) . ' für URL: ' . $url, 0);
+            curl_close($ch);
+            return null;
+        }
 
         if ($httpCode !== 200) {
             $this->SendDebug('doPost', 'Fehler HTTP ' . $httpCode . ' für URL: ' . $url . ' – Antwort: ' . $body, 0);
